@@ -1,7 +1,5 @@
 # imports
-from astrochat import AstroChat
-
- class AstroChatApp(AstroChat):
+class AstroChatApp:
      def __init__(self, **kwargs):
          super().__init__(**kwargs)
          self.api_key, self.selected_model = sidebar(
