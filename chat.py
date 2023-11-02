@@ -5,6 +5,7 @@ import json
 from shared import constants
 from components.sidebar import Sidebar
 from shared.utils import Utils
+import llmlite
 
 class AstroChatApp:
     def __init__(self):
@@ -26,25 +27,36 @@ class AstroChatApp:
     def create_chat_form(self):
         with st.form("chat_input", clear_on_submit=True):
             a, b = st.columns([4, 1])
-            user_input = a.text_input(
+            user_input = a.text_area(
                 label="Your message:",
                 placeholder="What would you like to say?",
-                label_visibility="collapsed",
+                height=150,  # You can adjust the height as needed
             )
             b.form_submit_button("Send", use_container_width=True)
         return user_input
+    
+    def get_llmlite_prediction(self, user_input):
+        # Use llmlite to get a prediction based on the user input
+        result = llmlite.predict(user_input)
+        return result
 
     def display_messages(self):
         for i, msg in enumerate(st.session_state.messages):
             message(msg["content"], is_user=msg["role"] == "user", key=i)
 
     def handle_user_input(self, user_input):
-        if not self.api_key:
-            st.info("Please click Connect OpenRouter to continue.")
-        else:
-            st.session_state.messages.append({"role": "user", "content": user_input})
-            message(user_input, is_user=True)
-            self.send_message_to_openai(user_input)
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        message(user_input, is_user=True)
+
+        if self.model_type == 'OpenRouter':
+            if not self.api_key:
+                st.info("Please click Connect OpenRouter to continue.")
+            else:
+                self.send_message_to_openai(user_input)
+        elif self.model_type == 'llmlite':
+            result = self.get_llmlite_prediction(user_input)
+            st.session_state.messages.append({"role": "assistant", "content": result})
+            message(result)
 
     def send_message_to_openai(self, user_input):
         openai.api_key = self.api_key
