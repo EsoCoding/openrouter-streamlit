@@ -1,17 +1,16 @@
 
+
 import streamlit as st
 import requests
 import json
 import shared.constants as constants
-import shared.utils
-
+from shared.utils import Utils
 
 class Sidebar:
     def __init__(self):
-        self.utils = shared.utils.Utils()
+        self.utils = Utils()
 
-    @staticmethod
-    def get_available_models():
+    def get_available_models(self):
         try:
             response = requests.get(constants.OPENROUTER_API_BASE + "/models")
             response.raise_for_status()
@@ -21,8 +20,8 @@ class Sidebar:
             st.error(f"Error getting models from API: {e}")
             return []
 
-    @staticmethod
-    def handle_model_selection(available_models, selected_model, default_model):
+
+    def handle_model_selection(self, available_models, selected_model, default_model):
         if selected_model and selected_model in available_models:
             selected_index = available_models.index(selected_model)
         else:
@@ -32,8 +31,8 @@ class Sidebar:
         )
         return selected_model
 
-    @staticmethod
-    def exchange_code_for_api_key(code: str):
+
+    def exchange_code_for_api_key(self,code: str):
         print(f"Exchanging code for API key: {code}")
         try:
             response = requests.post(
@@ -48,38 +47,26 @@ class Sidebar:
         except requests.exceptions.RequestException as e:
             st.error(f"Error exchanging code for API key: {e}")
 
-    def show_sidebar(self, default_model: str):
+    def on_provider_change(self, provider):
+        st.session_state["provider"] = provider
+
+    
+    def show_sidebar(self, default_model:str):
         with st.sidebar:
-            params = st.experimental_get_query_params()
-            code = params.get("code", [""])[0]
-            if code:
-                self.exchange_code_for_api_key(code)
-            api_key = st.session_state.get("api_key")
-            selected_model = params.get("model", [None])[0] or st.session_state.get(
-                "model", None
-            )
-            url = self.utils.url_to_hostname(self.utils.get_url())
-            if not api_key:
-                st.button(
-                    "Connect OpenRouter",
-                    on_click=self.utils.open_page,
-                    args=(f"{constants.OPENROUTER_BASE}/auth?callback_url={url}",),
-                )
-            available_models = Sidebar.get_available_models()
-            selected_model = Sidebar.handle_model_selection(
-                available_models, selected_model, default_model
-            )
-            st.session_state["model"] = selected_model
-            st.experimental_set_query_params(model=selected_model)
+            st.title("Settings")
+            provider = st.selectbox("Select Provider", ["OpenRouter", "LLMlite"])
 
-            if api_key:
-                st.text("Connected to OpenRouter")
-                if st.button("Log out"):
-                    del st.session_state["api_key"]
-                    st.experimental_rerun()
+            if provider == "OpenRouter":
+                # OpenRouter-specific code goes here
+                # ...
+                continue_button = st.button("Connect OpenRouter")
+                if continue_button:
+                    self.exchange_code_for_api_key(self, st.session_state["code"])
 
-            st.markdown(
-                "[View the source code](https://github.com/alexanderatallah/openrouter-streamlit)"
-            )
+            elif provider == "LLMlite":
+                st.text("LLMlite settings go here")
+                # Add any LLMlite-specific settings or authentication here
 
-        return api_key, selected_model
+            
+            
+        return st.session_state.get("api_key", None), st.session_state.get("model", None), provider

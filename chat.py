@@ -9,9 +9,9 @@ import llmlite
 
 class AstroChatApp:
     def __init__(self):
-        self.sidebar = Sidebar()
+        sidebar = Sidebar()
         self.utils = Utils()
-        self.api_key, self.selected_model = self.sidebar.show_sidebar(constants.OPENROUTER_DEFAULT_CHAT_MODEL)
+        self.api_key, self.selected_model, self.provider = sidebar.show_sidebar(constants.OPENROUTER_DEFAULT_CHAT_MODEL)
         self.setup_ui()
 
     def setup_ui(self):
